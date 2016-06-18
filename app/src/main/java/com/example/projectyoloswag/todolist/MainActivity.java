@@ -1,15 +1,22 @@
 package com.example.projectyoloswag.todolist;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
+
+    private SharedPreferences preferenceSettings;
+    private SharedPreferences.Editor preferenceEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,14 +25,33 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        preferenceSettings = getPreferences(0);
+        preferenceEditor = preferenceSettings.edit();
+
+        Set<String> myTasks = new HashSet();
+
+        if(preferenceSettings.getStringSet("myTasks", null) == null) {
+            preferenceEditor.putStringSet("myTasks", myTasks);
+            preferenceEditor.apply();
+        }
+
+        Intent intent = getIntent();
+        if(intent.getStringExtra(NewTask.EXTRA_MESSAGE) != null) {
+            String message = intent.getStringExtra(NewTask.EXTRA_MESSAGE);
+            myTasks = preferenceSettings.getStringSet("myTasks", null);
+            myTasks.add(message);
+            preferenceEditor.putStringSet("myTasks", myTasks);
+            preferenceEditor.apply();
+        }
+
+        myTasks = preferenceSettings.getStringSet("myTasks", null);
+
+        ListView listView = (ListView) findViewById(R.id.list);
+
+        String[] newArray = myTasks.toArray(new String[myTasks.size()]);
+
+        ArrayAdapter<String> itemsAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, newArray);
+        listView.setAdapter(itemsAdapter);
     }
 
     @Override
@@ -48,5 +74,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void createNewTask(View view){
+        Intent intent = new Intent(this, NewTask.class);
+        startActivity(intent);
     }
 }
